@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
-import styles from "./page.module.css";
-
-type ActiveTab =
-  | "chat"
-  | "documents"
-  | "rag"
-  | "chains"
-  | "agents"
-  | "memory"
-  | "tools";
+import { useState } from "react";
+import { Button } from "@repo/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/card";
+import { Input } from "@repo/ui/input";
+import { Textarea } from "@repo/ui/textarea";
+import { Label } from "@repo/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
+import { Badge } from "@repo/ui/badge";
+import { Separator } from "@repo/ui/separator";
+import { Skeleton } from "@repo/ui/skeleton";
+import { cn } from "@repo/ui/lib/utils";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -18,7 +18,6 @@ interface ChatMessage {
 }
 
 export default function LangChainDemoPage() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("chat");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +31,6 @@ export default function LangChainDemoPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
-  const [chatResponse, setChatResponse] = useState("");
 
   // 文档处理状态
   const [documentText, setDocumentText] = useState("");
@@ -114,7 +112,6 @@ export default function LangChainDemoPage() {
           content: data.data,
         };
         setChatMessages((prev) => [...prev, assistantMessage]);
-        setChatResponse(data.data);
       } else {
         throw new Error(data.error || "聊天失败");
       }
@@ -159,7 +156,6 @@ export default function LangChainDemoPage() {
     setError(null);
 
     try {
-      // 如果有文档文本，先添加到 RAG
       if (ragDocumentText.trim()) {
         await fetch("/api/rag/add", {
           method: "POST",
@@ -310,7 +306,6 @@ export default function LangChainDemoPage() {
 
   const clearChat = () => {
     setChatMessages([]);
-    setChatResponse("");
   };
 
   const clearMemory = () => {
@@ -319,426 +314,451 @@ export default function LangChainDemoPage() {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>LangChain 功能演示</h1>
-        <p className={styles.description}>
-          体验 LangChain 的所有核心功能：聊天、文档处理、RAG、链、代理、记忆和工具
-        </p>
-        <button
-          className={styles.buttonOutline}
-          onClick={() => setShowConfig(!showConfig)}
-          style={{ marginTop: "1rem" }}
-        >
-          {showConfig ? "隐藏" : "显示"} LLM 配置
-        </button>
-        {showConfig && (
-          <div className={styles.card} style={{ marginTop: "1rem" }}>
-            <h3 className={styles.cardTitle}>LLM 配置</h3>
-            <div className={styles.configGroup}>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>提供商</label>
-                <select
-                  className={styles.input}
-                  value={provider}
-                  onChange={(e) =>
-                    setProvider(e.target.value as "ollama" | "deepseek")
-                  }
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header */}
+        <div className="text-center mb-8 space-y-4">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            <span className="text-gradient">LangChain 功能演示</span>
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            体验 LangChain 的所有核心功能：聊天、文档处理、RAG、链、代理、记忆和工具
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => setShowConfig(!showConfig)}
+            className="mt-4"
+          >
+            {showConfig ? "隐藏" : "显示"} LLM 配置
+          </Button>
+          {showConfig && (
+            <Card className="mt-4 max-w-2xl mx-auto shadow-dribbble-md">
+              <CardHeader>
+                <CardTitle>LLM 配置</CardTitle>
+                <CardDescription>配置语言模型的提供商和参数</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>提供商</Label>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={provider}
+                      onChange={(e) =>
+                        setProvider(e.target.value as "ollama" | "deepseek")
+                      }
+                    >
+                      <option value="ollama">Ollama (本地)</option>
+                      <option value="deepseek">DeepSeek (API)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>模型</Label>
+                    <Input
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      placeholder={
+                        provider === "deepseek" ? "deepseek-chat" : "llama3"
+                      }
+                    />
+                  </div>
+                  {provider === "deepseek" && (
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>API Key</Label>
+                      <Input
+                        type="password"
+                        value={apiKey}
+                        onChange={(e) => setApiKey(e.target.value)}
+                        placeholder="输入 DeepSeek API Key"
+                      />
+                    </div>
+                  )}
+                </div>
+                <Button
+                  onClick={updateLLMConfig}
+                  disabled={provider === "deepseek" && !apiKey.trim()}
+                  className="w-full"
                 >
-                  <option value="ollama">Ollama (本地)</option>
-                  <option value="deepseek">DeepSeek (API)</option>
-                </select>
+                  更新配置
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {error && (
+          <Card className="mb-6 border-destructive shadow-dribbble-md">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 text-destructive">
+                <span>❌</span>
+                <p>{error}</p>
               </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>模型</label>
-                <input
-                  className={styles.input}
-                  type="text"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder={
-                    provider === "deepseek"
-                      ? "deepseek-chat"
-                      : "llama3"
-                  }
-                />
-              </div>
-              {provider === "deepseek" && (
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>API Key</label>
-                  <input
-                    className={styles.input}
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="输入 DeepSeek API Key"
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tabs */}
+        <Tabs defaultValue="chat" className="w-full">
+          <TabsList className="grid w-full grid-cols-7 mb-6 h-auto p-1">
+            <TabsTrigger value="chat">💬 聊天</TabsTrigger>
+            <TabsTrigger value="documents">📄 文档</TabsTrigger>
+            <TabsTrigger value="rag">🔍 RAG</TabsTrigger>
+            <TabsTrigger value="chains">⛓️ 链</TabsTrigger>
+            <TabsTrigger value="agents">🤖 代理</TabsTrigger>
+            <TabsTrigger value="memory">🧠 记忆</TabsTrigger>
+            <TabsTrigger value="tools">🛠️ 工具</TabsTrigger>
+          </TabsList>
+
+          {/* Chat Tab */}
+          <TabsContent value="chat" className="space-y-4">
+            <Card className="shadow-dribbble-md">
+              <CardHeader>
+                <CardTitle>基础聊天</CardTitle>
+                <CardDescription>与 AI 进行对话交流</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>系统提示词（可选）</Label>
+                  <Textarea
+                    value={systemPrompt}
+                    onChange={(e) => setSystemPrompt(e.target.value)}
+                    placeholder="例如：你是一个有用的AI助手..."
+                    rows={2}
                   />
                 </div>
-              )}
-            </div>
-            <button
-              className={styles.button}
-              onClick={updateLLMConfig}
-              disabled={provider === "deepseek" && !apiKey.trim()}
-            >
-              更新配置
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tab} ${activeTab === "chat" ? styles.active : ""}`}
-          onClick={() => setActiveTab("chat")}
-        >
-          💬 聊天
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === "documents" ? styles.active : ""}`}
-          onClick={() => setActiveTab("documents")}
-        >
-          📄 文档处理
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === "rag" ? styles.active : ""}`}
-          onClick={() => setActiveTab("rag")}
-        >
-          🔍 RAG 检索
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === "chains" ? styles.active : ""}`}
-          onClick={() => setActiveTab("chains")}
-        >
-          ⛓️ 链
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === "agents" ? styles.active : ""}`}
-          onClick={() => setActiveTab("agents")}
-        >
-          🤖 代理
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === "memory" ? styles.active : ""}`}
-          onClick={() => setActiveTab("memory")}
-        >
-          🧠 记忆
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === "tools" ? styles.active : ""}`}
-          onClick={() => setActiveTab("tools")}
-        >
-          🛠️ 工具
-        </button>
-      </div>
-
-      <div className={styles.tabContent}>
-        {error && (
-          <div className={styles.errorCard}>
-            <p className={styles.errorMessage}>❌ {error}</p>
-          </div>
-        )}
-
-        {/* 聊天标签页 */}
-        {activeTab === "chat" && (
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>基础聊天</h2>
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>系统提示词（可选）</label>
-              <textarea
-                className={styles.textArea}
-                value={systemPrompt}
-                onChange={(e) => setSystemPrompt(e.target.value)}
-                placeholder="例如：你是一个有用的AI助手..."
-                rows={2}
-              />
-            </div>
-            <div className={styles.chatContainer}>
-              {chatMessages.length === 0 && (
-                <p style={{ color: "#666", textAlign: "center" }}>
-                  开始对话...
-                </p>
-              )}
-              {chatMessages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`${styles.chatMessage} ${styles[msg.role]}`}
-                >
-                  {msg.content}
-                </div>
-              ))}
-              {isProcessing && (
-                <div className={styles.chatMessage}>
-                  <div className={styles.loading}></div>
-                </div>
-              )}
-            </div>
-            <div className={styles.chatInput}>
-              <input
-                className={styles.input}
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleChat()}
-                placeholder="输入消息..."
-                disabled={isProcessing}
-              />
-              <button
-                className={styles.button}
-                onClick={handleChat}
-                disabled={isProcessing || !chatInput.trim()}
-              >
-                发送
-              </button>
-              <button
-                className={styles.buttonOutline}
-                onClick={clearChat}
-                disabled={isProcessing}
-              >
-                清空
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 文档处理标签页 */}
-        {activeTab === "documents" && (
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>文档加载与处理</h2>
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>文档文本</label>
-              <textarea
-                className={styles.textArea}
-                value={documentText}
-                onChange={(e) => setDocumentText(e.target.value)}
-                placeholder="输入或粘贴文档内容..."
-                rows={10}
-              />
-            </div>
-            <div className={styles.buttonGroup}>
-              <button
-                className={styles.button}
-                onClick={handleDocumentProcess}
-                disabled={isProcessing || !documentText.trim()}
-              >
-                处理文档
-              </button>
-            </div>
-            {documentResult && (
-              <div className={styles.resultCard}>
-                <h3 className={styles.resultTitle}>处理结果</h3>
-                <div className={styles.resultContent}>{documentResult}</div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* RAG 标签页 */}
-        {activeTab === "rag" && (
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>RAG 检索增强生成</h2>
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>添加文档（用于检索）</label>
-              <textarea
-                className={styles.textArea}
-                value={ragDocumentText}
-                onChange={(e) => setRagDocumentText(e.target.value)}
-                placeholder="输入文档内容，这些内容将被索引用于检索..."
-                rows={6}
-              />
-            </div>
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>问题</label>
-              <textarea
-                className={styles.textArea}
-                value={ragQuestion}
-                onChange={(e) => setRagQuestion(e.target.value)}
-                placeholder="输入你的问题..."
-                rows={3}
-              />
-            </div>
-            <div className={styles.buttonGroup}>
-              <button
-                className={styles.button}
-                onClick={handleRAGQuery}
-                disabled={isProcessing || !ragQuestion.trim()}
-              >
-                查询
-              </button>
-            </div>
-            {ragAnswer && (
-              <div className={styles.resultCard}>
-                <h3 className={styles.resultTitle}>回答</h3>
-                <div className={styles.resultContent}>{ragAnswer}</div>
-                {ragSources.length > 0 && (
-                  <div className={styles.sourcesList}>
-                    <h4>相关来源：</h4>
-                    {ragSources.map((source, idx) => (
-                      <div key={idx} className={styles.sourceItem}>
-                        <div>{source.pageContent}</div>
-                        {source.score && (
-                          <div className={styles.sourceScore}>
-                            相似度: {(source.score * 100).toFixed(2)}%
-                          </div>
+                <div className="rounded-lg border bg-card p-4 h-[400px] overflow-y-auto space-y-4">
+                  {chatMessages.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">
+                      开始对话...
+                    </p>
+                  )}
+                  {chatMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "flex",
+                        msg.role === "user" ? "justify-end" : "justify-start"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "rounded-lg px-4 py-2 max-w-[80%]",
+                          msg.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted"
                         )}
+                      >
+                        {msg.content}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+                    </div>
+                  ))}
+                  {isProcessing && (
+                    <div className="flex justify-start">
+                      <Skeleton className="h-10 w-32" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleChat()}
+                    placeholder="输入消息..."
+                    disabled={isProcessing}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleChat}
+                    disabled={isProcessing || !chatInput.trim()}
+                  >
+                    发送
+                  </Button>
+                  <Button variant="outline" onClick={clearChat} disabled={isProcessing}>
+                    清空
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* 链标签页 */}
-        {activeTab === "chains" && (
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>链式处理</h2>
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>输入</label>
-              <textarea
-                className={styles.textArea}
-                value={chainInput}
-                onChange={(e) => setChainInput(e.target.value)}
-                placeholder="输入要处理的内容..."
-                rows={5}
-              />
-            </div>
-            <div className={styles.buttonGroup}>
-              <button
-                className={styles.button}
-                onClick={handleChainExecute}
-                disabled={isProcessing || !chainInput.trim()}
-              >
-                执行链
-              </button>
-            </div>
-            {chainResult && (
-              <div className={styles.resultCard}>
-                <h3 className={styles.resultTitle}>结果</h3>
-                <div className={styles.resultContent}>{chainResult}</div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 代理标签页 */}
-        {activeTab === "agents" && (
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>代理（Agents）</h2>
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>任务描述</label>
-              <textarea
-                className={styles.textArea}
-                value={agentInput}
-                onChange={(e) => setAgentInput(e.target.value)}
-                placeholder="描述代理需要完成的任务，例如：计算 123 * 456..."
-                rows={5}
-              />
-            </div>
-            <div className={styles.buttonGroup}>
-              <button
-                className={styles.button}
-                onClick={handleAgentInvoke}
-                disabled={isProcessing || !agentInput.trim()}
-              >
-                执行代理
-              </button>
-            </div>
-            {agentResult && (
-              <div className={styles.resultCard}>
-                <h3 className={styles.resultTitle}>执行结果</h3>
-                <div className={styles.resultContent}>{agentResult}</div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 记忆标签页 */}
-        {activeTab === "memory" && (
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>对话记忆</h2>
-            <div className={styles.chatContainer}>
-              {memoryHistory.length === 0 && (
-                <p style={{ color: "#666", textAlign: "center" }}>
-                  开始对话，记忆将自动保存...
-                </p>
-              )}
-              {memoryHistory.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`${styles.chatMessage} ${styles[msg.role]}`}
+          {/* Documents Tab */}
+          <TabsContent value="documents" className="space-y-4">
+            <Card className="shadow-dribbble-md">
+              <CardHeader>
+                <CardTitle>文档加载与处理</CardTitle>
+                <CardDescription>处理和解析文档内容</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>文档文本</Label>
+                  <Textarea
+                    value={documentText}
+                    onChange={(e) => setDocumentText(e.target.value)}
+                    placeholder="输入或粘贴文档内容..."
+                    rows={10}
+                  />
+                </div>
+                <Button
+                  onClick={handleDocumentProcess}
+                  disabled={isProcessing || !documentText.trim()}
                 >
-                  {msg.content}
-                </div>
-              ))}
-              {isProcessing && (
-                <div className={styles.chatMessage}>
-                  <div className={styles.loading}></div>
-                </div>
-              )}
-            </div>
-            <div className={styles.chatInput}>
-              <input
-                className={styles.input}
-                type="text"
-                value={memoryInput}
-                onChange={(e) => setMemoryInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleMemoryChat()}
-                placeholder="输入消息..."
-                disabled={isProcessing}
-              />
-              <button
-                className={styles.button}
-                onClick={handleMemoryChat}
-                disabled={isProcessing || !memoryInput.trim()}
-              >
-                发送
-              </button>
-              <button
-                className={styles.buttonOutline}
-                onClick={clearMemory}
-                disabled={isProcessing}
-              >
-                清空记忆
-              </button>
-            </div>
-          </div>
-        )}
+                  处理文档
+                </Button>
+                {documentResult && (
+                  <Card className="bg-muted/50">
+                    <CardHeader>
+                      <CardTitle>处理结果</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="whitespace-pre-wrap">{documentResult}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* 工具标签页 */}
-        {activeTab === "tools" && (
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>工具调用</h2>
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>工具输入（例如：计算表达式）</label>
-              <textarea
-                className={styles.textArea}
-                value={toolInput}
-                onChange={(e) => setToolInput(e.target.value)}
-                placeholder="例如：计算 2 + 2 * 3..."
-                rows={5}
-              />
-            </div>
-            <div className={styles.buttonGroup}>
-              <button
-                className={styles.button}
-                onClick={handleToolExecute}
-                disabled={isProcessing || !toolInput.trim()}
-              >
-                执行工具
-              </button>
-            </div>
-            {toolResult && (
-              <div className={styles.resultCard}>
-                <h3 className={styles.resultTitle}>执行结果</h3>
-                <div className={styles.resultContent}>{toolResult}</div>
-              </div>
-            )}
-          </div>
-        )}
+          {/* RAG Tab */}
+          <TabsContent value="rag" className="space-y-4">
+            <Card className="shadow-dribbble-md">
+              <CardHeader>
+                <CardTitle>RAG 检索增强生成</CardTitle>
+                <CardDescription>基于文档内容进行智能问答</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>添加文档（用于检索）</Label>
+                  <Textarea
+                    value={ragDocumentText}
+                    onChange={(e) => setRagDocumentText(e.target.value)}
+                    placeholder="输入文档内容，这些内容将被索引用于检索..."
+                    rows={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>问题</Label>
+                  <Textarea
+                    value={ragQuestion}
+                    onChange={(e) => setRagQuestion(e.target.value)}
+                    placeholder="输入你的问题..."
+                    rows={3}
+                  />
+                </div>
+                <Button
+                  onClick={handleRAGQuery}
+                  disabled={isProcessing || !ragQuestion.trim()}
+                >
+                  查询
+                </Button>
+                {ragAnswer && (
+                  <Card className="bg-muted/50">
+                    <CardHeader>
+                      <CardTitle>回答</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="whitespace-pre-wrap">{ragAnswer}</p>
+                      {ragSources.length > 0 && (
+                        <>
+                          <Separator />
+                          <div className="space-y-2">
+                            <h4 className="font-semibold">相关来源：</h4>
+                            {ragSources.map((source, idx) => (
+                              <Card key={idx} className="bg-background">
+                                <CardContent className="pt-4">
+                                  <p className="text-sm">{source.pageContent}</p>
+                                  {source.score && (
+                                    <Badge variant="secondary" className="mt-2">
+                                      相似度: {(source.score * 100).toFixed(2)}%
+                                    </Badge>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Chains Tab */}
+          <TabsContent value="chains" className="space-y-4">
+            <Card className="shadow-dribbble-md">
+              <CardHeader>
+                <CardTitle>链式处理</CardTitle>
+                <CardDescription>通过链式调用处理复杂任务</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>输入</Label>
+                  <Textarea
+                    value={chainInput}
+                    onChange={(e) => setChainInput(e.target.value)}
+                    placeholder="输入要处理的内容..."
+                    rows={5}
+                  />
+                </div>
+                <Button
+                  onClick={handleChainExecute}
+                  disabled={isProcessing || !chainInput.trim()}
+                >
+                  执行链
+                </Button>
+                {chainResult && (
+                  <Card className="bg-muted/50">
+                    <CardHeader>
+                      <CardTitle>结果</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="whitespace-pre-wrap">{chainResult}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Agents Tab */}
+          <TabsContent value="agents" className="space-y-4">
+            <Card className="shadow-dribbble-md">
+              <CardHeader>
+                <CardTitle>代理（Agents）</CardTitle>
+                <CardDescription>使用智能代理完成复杂任务</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>任务描述</Label>
+                  <Textarea
+                    value={agentInput}
+                    onChange={(e) => setAgentInput(e.target.value)}
+                    placeholder="描述代理需要完成的任务，例如：计算 123 * 456..."
+                    rows={5}
+                  />
+                </div>
+                <Button
+                  onClick={handleAgentInvoke}
+                  disabled={isProcessing || !agentInput.trim()}
+                >
+                  执行代理
+                </Button>
+                {agentResult && (
+                  <Card className="bg-muted/50">
+                    <CardHeader>
+                      <CardTitle>执行结果</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="whitespace-pre-wrap">{agentResult}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Memory Tab */}
+          <TabsContent value="memory" className="space-y-4">
+            <Card className="shadow-dribbble-md">
+              <CardHeader>
+                <CardTitle>对话记忆</CardTitle>
+                <CardDescription>带有记忆功能的对话系统</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-lg border bg-card p-4 h-[400px] overflow-y-auto space-y-4">
+                  {memoryHistory.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">
+                      开始对话，记忆将自动保存...
+                    </p>
+                  )}
+                  {memoryHistory.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "flex",
+                        msg.role === "user" ? "justify-end" : "justify-start"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "rounded-lg px-4 py-2 max-w-[80%]",
+                          msg.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted"
+                        )}
+                      >
+                        {msg.content}
+                      </div>
+                    </div>
+                  ))}
+                  {isProcessing && (
+                    <div className="flex justify-start">
+                      <Skeleton className="h-10 w-32" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={memoryInput}
+                    onChange={(e) => setMemoryInput(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleMemoryChat()}
+                    placeholder="输入消息..."
+                    disabled={isProcessing}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleMemoryChat}
+                    disabled={isProcessing || !memoryInput.trim()}
+                  >
+                    发送
+                  </Button>
+                  <Button variant="outline" onClick={clearMemory} disabled={isProcessing}>
+                    清空记忆
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tools Tab */}
+          <TabsContent value="tools" className="space-y-4">
+            <Card className="shadow-dribbble-md">
+              <CardHeader>
+                <CardTitle>工具调用</CardTitle>
+                <CardDescription>使用工具扩展 AI 能力</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>工具输入（例如：计算表达式）</Label>
+                  <Textarea
+                    value={toolInput}
+                    onChange={(e) => setToolInput(e.target.value)}
+                    placeholder="例如：计算 2 + 2 * 3..."
+                    rows={5}
+                  />
+                </div>
+                <Button
+                  onClick={handleToolExecute}
+                  disabled={isProcessing || !toolInput.trim()}
+                >
+                  执行工具
+                </Button>
+                {toolResult && (
+                  <Card className="bg-muted/50">
+                    <CardHeader>
+                      <CardTitle>执行结果</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="whitespace-pre-wrap">{toolResult}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
 }
-

@@ -74,3 +74,5 @@ export interface UserStats {
   behaviorCounts: Record<BehaviorType, number>;
 }
 
+
+

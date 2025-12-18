@@ -97,3 +97,5 @@ export interface TextProcessingOptions {
   /** 是否返回归一化的嵌入向量，默认 true */
   normalize?: boolean;
 }
+
+
