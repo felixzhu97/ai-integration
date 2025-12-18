@@ -39,8 +39,16 @@ export default function Home() {
         </ol>
 
         <div className={styles.ctas}>
+          <a href="/tensorflow-demo" className={styles.primary}>
+            🚀 TensorFlow.js 演示
+          </a>
+          <a href="/image-recognition" className={styles.secondary}>
+            🖼️ 图像识别
+          </a>
+        </div>
+        <div className={styles.ctas}>
           <a
-            className={styles.primary}
+            className={styles.secondary}
             href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
             target="_blank"
             rel="noopener noreferrer"
@@ -63,9 +71,6 @@ export default function Home() {
             Read our docs
           </a>
         </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
       </main>
       <footer className={styles.footer}>
         <a
