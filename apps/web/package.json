@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@repo/langchain": "workspace:*",
+    "@repo/recommendation": "workspace:*",
     "@repo/tensorflow": "workspace:*",
     "@repo/ui": "workspace:*",
     "next": "^16.0.0",

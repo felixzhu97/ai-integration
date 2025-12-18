@@ -45,6 +45,9 @@ export default function Home() {
           <a href="/langchain-demo" className={styles.primary}>
             🤖 LangChain 演示
           </a>
+          <a href="/recommendation-demo" className={styles.primary}>
+            💡 推荐系统演示
+          </a>
           <a href="/image-recognition" className={styles.secondary}>
             🖼️ 图像识别
           </a>
