@@ -42,6 +42,9 @@ export default function Home() {
           <a href="/tensorflow-demo" className={styles.primary}>
             🚀 TensorFlow.js 演示
           </a>
+          <a href="/langchain-demo" className={styles.primary}>
+            🤖 LangChain 演示
+          </a>
           <a href="/image-recognition" className={styles.secondary}>
             🖼️ 图像识别
           </a>

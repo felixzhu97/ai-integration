@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ChatService } from "@repo/langchain";
+import { ChatService, resetLLMLoader } from "@repo/langchain";
 import type { Message } from "@repo/langchain";
 
-const chatService = new ChatService();
+let chatService = new ChatService();
 
 /**
  * POST /api/chat
@@ -11,7 +11,25 @@ const chatService = new ChatService();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message, messages, systemPrompt, stream: useStream } = body;
+    const {
+      message,
+      messages,
+      systemPrompt,
+      stream: useStream,
+      provider,
+      apiKey,
+      model,
+    } = body;
+
+    // 如果提供了新的配置，更新 ChatService
+    if (provider || apiKey || model) {
+      resetLLMLoader();
+      chatService = new ChatService({
+        provider: provider || "ollama",
+        model: model || (provider === "deepseek" ? "deepseek-chat" : "llama3"),
+        apiKey: apiKey || undefined,
+      });
+    }
 
     // 验证请求参数
     if (!message && !messages) {
