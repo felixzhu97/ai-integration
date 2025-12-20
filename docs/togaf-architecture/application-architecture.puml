@@ -1,0 +1,144 @@
+@startuml 应用架构图
+!theme plain
+skinparam componentStyle rectangle
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 11
+
+title TOGAF 应用架构视图 - AI集成平台 Monorepo
+
+' 前端应用层
+package "前端应用层" {
+  component "apps/web\n(AI集成平台)" as WebApp {
+    component "页面组件" as WebPages
+    component "API客户端" as WebAPI
+  }
+  
+  component "apps/docs\n(文档应用)" as DocsApp {
+    component "文档页面" as DocsPages
+  }
+}
+
+' API服务层
+package "API服务层" {
+  component "Next.js API Routes" as APIRoutes {
+    component "/api/chat" as APIChat
+    component "/api/agents" as APIAgents
+    component "/api/chains" as APIChains
+    component "/api/documents" as APIDocuments
+    component "/api/rag" as APIRAG
+    component "/api/memory" as APIMemory
+    component "/api/image-recognition" as APIImage
+    component "/api/recommendation" as APIRecommendation
+    component "/api/tools" as APITools
+    component "/api/llm/config" as APIConfig
+  }
+}
+
+' 业务服务包层
+package "业务服务包层" {
+  package "packages/langchain" as LangChainPkg {
+    component "聊天服务\n(ChatService)" as ChatService
+    component "文档加载器\n(DocumentLoader)" as DocLoader
+    component "RAG服务\n(RAGService)" as RAGService
+    component "代理服务\n(AgentService)" as AgentService
+    component "工具服务\n(ToolService)" as ToolService
+    component "记忆服务\n(MemoryService)" as MemoryService
+    component "链服务\n(ChainService)" as ChainService
+  }
+  
+  package "packages/tensorflow" as TensorFlowPkg {
+    component "图像分类\n(ImageClassification)" as ImageClass
+    component "对象检测\n(ObjectDetection)" as ObjectDetect
+    component "姿态估计\n(PoseEstimation)" as PoseEst
+    component "文本处理\n(TextProcessing)" as TextProc
+    component "模型管理\n(ModelManager)" as ModelMgr
+  }
+  
+  package "packages/recommendation" as RecommendationPkg {
+    component "推荐引擎\n(RecommendationEngine)" as RecEngine
+    component "行为追踪\n(BehaviorTracker)" as BehaviorTracker
+  }
+}
+
+' 基础设施包层
+package "基础设施包层" {
+  component "packages/ui\n(共享UI组件库)" as UIPkg {
+    component "Button" as UIButton
+    component "Card" as UICard
+    component "Dialog" as UIDialog
+    component "Input" as UIInput
+  }
+  
+  component "packages/eslint-config\n(ESLint配置)" as ESLintPkg
+  component "packages/typescript-config\n(TypeScript配置)" as TSPkg
+}
+
+' 关系定义
+WebApp --> APIRoutes : HTTP请求
+WebPages --> WebAPI : 调用
+WebAPI --> APIChat : 调用
+WebAPI --> APIAgents : 调用
+WebAPI --> APIChains : 调用
+WebAPI --> APIDocuments : 调用
+WebAPI --> APIRAG : 调用
+WebAPI --> APIMemory : 调用
+WebAPI --> APIImage : 调用
+WebAPI --> APIRecommendation : 调用
+WebAPI --> APITools : 调用
+WebAPI --> APIConfig : 调用
+
+DocsApp --> UIPkg : 使用
+WebApp --> UIPkg : 使用
+
+APIChat --> ChatService : 调用
+APIAgents --> AgentService : 调用
+APIChains --> ChainService : 调用
+APIDocuments --> DocLoader : 调用
+APIRAG --> RAGService : 调用
+APIMemory --> MemoryService : 调用
+APIImage --> ImageClass : 调用
+APIImage --> ObjectDetect : 调用
+APIRecommendation --> RecEngine : 调用
+APITools --> ToolService : 调用
+
+RAGService --> DocLoader : 使用
+AgentService --> ToolService : 使用
+AgentService --> MemoryService : 使用
+RecEngine --> BehaviorTracker : 使用
+
+ImageClass --> ModelMgr : 使用
+ObjectDetect --> ModelMgr : 使用
+PoseEst --> ModelMgr : 使用
+TextProc --> ModelMgr : 使用
+
+WebApp --> ESLintPkg : 配置依赖
+WebApp --> TSPkg : 配置依赖
+DocsApp --> ESLintPkg : 配置依赖
+DocsApp --> TSPkg : 配置依赖
+LangChainPkg --> TSPkg : 配置依赖
+TensorFlowPkg --> TSPkg : 配置依赖
+RecommendationPkg --> TSPkg : 配置依赖
+
+note right of WebApp
+  AI集成平台主应用
+  提供TensorFlow、LangChain、
+  推荐系统、图像识别等功能
+end note
+
+note right of LangChainPkg
+  基于整洁架构
+  Domain/Infrastructure/UseCases
+end note
+
+note right of TensorFlowPkg
+  基于整洁架构
+  Domain/Infrastructure/UseCases
+end note
+
+note right of RecommendationPkg
+  基于整洁架构
+  Domain/Infrastructure/UseCases
+end note
+
+@enduml
+

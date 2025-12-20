@@ -1,0 +1,97 @@
+@startuml 业务架构图
+!theme plain
+skinparam componentStyle rectangle
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+
+title TOGAF 业务架构视图 - AI集成平台
+
+' 业务角色
+package "业务角色" {
+  actor "最终用户" as User
+  actor "系统管理员" as Admin
+}
+
+' 业务能力
+package "业务能力层" {
+  component "AI图像识别服务" as ImageRecognition {
+    note right
+      提供图像分类、对象检测、
+      姿态估计等AI识别能力
+    end note
+  }
+  
+  component "智能对话服务" as ChatService {
+    note right
+      提供AI聊天、智能问答、
+      上下文理解能力
+    end note
+  }
+  
+  component "个性化推荐服务" as RecommendationService {
+    note right
+      基于用户行为分析，
+      提供个性化内容推荐
+    end note
+  }
+  
+  component "文档处理服务" as DocumentService {
+    note right
+      文档加载、向量化、
+      RAG检索增强生成
+    end note
+  }
+}
+
+' 业务流程
+package "业务流程层" {
+  component "用户交互流程" as UserFlow {
+    note right
+      用户请求 -> 服务处理 ->
+      结果返回 -> 用户反馈
+    end note
+  }
+  
+  component "数据处理流程" as DataFlow {
+    note right
+      数据输入 -> 预处理 ->
+      AI处理 -> 结果输出
+    end note
+  }
+}
+
+' 业务价值
+package "业务价值" {
+  component "提升用户体验" as Value1
+  component "增强业务智能" as Value2
+  component "优化运营效率" as Value3
+}
+
+' 关系定义
+User --> ImageRecognition : 使用
+User --> ChatService : 使用
+User --> RecommendationService : 使用
+User --> DocumentService : 使用
+
+Admin --> ImageRecognition : 管理
+Admin --> ChatService : 管理
+Admin --> RecommendationService : 管理
+Admin --> DocumentService : 管理
+
+ImageRecognition --> UserFlow : 参与
+ChatService --> UserFlow : 参与
+RecommendationService --> UserFlow : 参与
+DocumentService --> UserFlow : 参与
+
+UserFlow --> DataFlow : 触发
+DataFlow --> ImageRecognition : 调用
+DataFlow --> ChatService : 调用
+DataFlow --> RecommendationService : 调用
+DataFlow --> DocumentService : 调用
+
+UserFlow --> Value1 : 实现
+UserFlow --> Value2 : 实现
+DataFlow --> Value3 : 实现
+
+@enduml
+

@@ -1,0 +1,236 @@
+@startuml 技术架构图
+!theme plain
+skinparam componentStyle rectangle
+skinparam nodeStyle rectangle
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 11
+
+title TOGAF 技术架构视图 - AI集成平台 Monorepo
+
+' 开发工具层
+package "开发工具层" {
+  component "Turborepo" as Turborepo {
+    note right
+      任务编排和构建优化
+      支持并行构建和缓存
+    end note
+  }
+  
+  component "pnpm" as Pnpm {
+    note right
+      包管理器
+      Workspace依赖管理
+    end note
+  }
+  
+  component "TypeScript" as TypeScript {
+    note right
+      类型检查
+      共享配置
+    end note
+  }
+  
+  component "ESLint" as ESLint {
+    note right
+      代码检查
+      共享配置
+    end note
+  }
+  
+  component "Prettier" as Prettier {
+    note right
+      代码格式化
+    end note
+  }
+}
+
+' 前端技术栈
+package "前端技术栈" {
+  component "Next.js 16" as NextJS {
+    component "App Router" as AppRouter
+    component "Server Components" as ServerComponents
+    component "API Routes" as APIRoutes
+  }
+  
+  component "React 19" as React {
+    note right
+      用户界面框架
+      组件化开发
+    end note
+  }
+  
+  component "TypeScript 5.9" as TS {
+    note right
+      类型安全
+      开发体验优化
+    end note
+  }
+  
+  component "Tailwind CSS" as Tailwind {
+    note right
+      CSS框架
+      响应式设计
+    end note
+  }
+  
+  component "Sharp" as Sharp {
+    note right
+      图像处理库
+      服务器端图像处理
+    end note
+  }
+}
+
+' AI框架层
+package "AI框架层" {
+  component "TensorFlow.js" as TFJS {
+    component "MobileNet" as MobileNet
+    component "COCO-SSD" as COCOSSD
+    component "PoseNet" as PoseNet
+    component "Universal Sentence Encoder" as USE
+    note right
+      浏览器端机器学习
+      模型推理和训练
+    end note
+  }
+  
+  component "LangChain" as LangChain {
+    component "LLM集成" as LLMIntegration
+    component "向量存储" as VectorStore
+    component "链式调用" as Chains
+    component "代理框架" as Agents
+    note right
+      AI应用开发框架
+      支持多种LLM和工具
+    end note
+  }
+}
+
+' Monorepo结构
+package "Monorepo结构" {
+  node "apps/" as AppsDir {
+    component "apps/web" as WebApp
+    component "apps/docs" as DocsApp
+  }
+  
+  node "packages/" as PackagesDir {
+    component "packages/langchain" as LangChainPkg
+    component "packages/tensorflow" as TensorFlowPkg
+    component "packages/recommendation" as RecommendationPkg
+    component "packages/ui" as UIPkg
+    component "packages/eslint-config" as ESLintConfig
+    component "packages/typescript-config" as TSConfig
+  }
+}
+
+' 构建和部署
+package "构建和部署" {
+  component "开发环境" as DevEnv {
+    component "本地开发服务器" as DevServer
+    component "热重载" as HotReload
+  }
+  
+  component "生产环境" as ProdEnv {
+    component "Next.js构建" as NextBuild
+    component "静态资源" as StaticAssets
+    component "服务器端渲染" as SSR
+  }
+  
+  component "模型管理" as ModelMgr {
+    component "模型加载" as ModelLoad
+    component "模型缓存" as ModelCache
+    component "按需加载" as OnDemandLoad
+  }
+}
+
+' 关系定义
+Turborepo --> AppsDir : 管理
+Turborepo --> PackagesDir : 管理
+Pnpm --> AppsDir : 依赖管理
+Pnpm --> PackagesDir : 依赖管理
+
+WebApp --> NextJS : 使用
+WebApp --> React : 使用
+WebApp --> TS : 使用
+WebApp --> Tailwind : 使用
+WebApp --> LangChainPkg : 依赖
+WebApp --> TensorFlowPkg : 依赖
+WebApp --> RecommendationPkg : 依赖
+WebApp --> UIPkg : 依赖
+
+DocsApp --> NextJS : 使用
+DocsApp --> React : 使用
+DocsApp --> TS : 使用
+DocsApp --> UIPkg : 依赖
+
+LangChainPkg --> LangChain : 使用
+TensorFlowPkg --> TFJS : 使用
+
+NextJS --> APIRoutes : 提供
+APIRoutes --> Sharp : 使用
+APIRoutes --> LangChainPkg : 调用
+APIRoutes --> TensorFlowPkg : 调用
+APIRoutes --> RecommendationPkg : 调用
+
+TFJS --> MobileNet : 包含
+TFJS --> COCOSSD : 包含
+TFJS --> PoseNet : 包含
+TFJS --> USE : 包含
+
+LangChain --> LLMIntegration : 提供
+LangChain --> VectorStore : 提供
+LangChain --> Chains : 提供
+LangChain --> Agents : 提供
+
+WebApp --> ESLintConfig : 使用配置
+WebApp --> TSConfig : 使用配置
+DocsApp --> ESLintConfig : 使用配置
+DocsApp --> TSConfig : 使用配置
+LangChainPkg --> TSConfig : 使用配置
+TensorFlowPkg --> TSConfig : 使用配置
+RecommendationPkg --> TSConfig : 使用配置
+
+TypeScript --> TSConfig : 配置
+ESLint --> ESLintConfig : 配置
+
+Turborepo --> DevEnv : 支持
+Turborepo --> ProdEnv : 支持
+NextJS --> DevServer : 提供
+NextJS --> NextBuild : 生成
+NextJS --> SSR : 支持
+
+ModelMgr --> TFJS : 管理
+ModelMgr --> ModelLoad : 提供
+ModelMgr --> ModelCache : 提供
+ModelMgr --> OnDemandLoad : 支持
+
+note right of Turborepo
+  Monorepo任务编排
+  - 并行执行任务
+  - 智能缓存
+  - 增量构建
+end note
+
+note right of Pnpm
+  Workspace依赖管理
+  - 共享依赖去重
+  - 本地包链接
+  - 快速安装
+end note
+
+note right of TFJS
+  浏览器端ML
+  - 无需服务器
+  - 实时推理
+  - 模型缓存
+end note
+
+note right of LangChain
+  AI应用框架
+  - 多LLM支持
+  - 工具集成
+  - 链式调用
+end note
+
+@enduml
+

@@ -1,0 +1,170 @@
+@startuml 数据架构图
+!theme plain
+skinparam componentStyle rectangle
+skinparam databaseStyle rectangle
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 11
+
+title TOGAF 数据架构视图 - AI集成平台
+
+' 数据源层
+package "数据源层" {
+  component "用户输入数据" as UserInput {
+    database "文本输入" as TextInput
+    database "图像输入" as ImageInput
+    database "行为数据" as BehaviorInput
+  }
+  
+  component "外部数据源" as ExternalData {
+    database "文档文件" as DocFiles
+    database "模型文件" as ModelFiles
+  }
+}
+
+' 数据处理层
+package "数据处理层" {
+  component "数据预处理" as DataPreprocess {
+    component "图像预处理" as ImagePreprocess
+    component "文本预处理" as TextPreprocess
+    component "行为数据收集" as BehaviorCollect
+  }
+  
+  component "AI处理引擎" as AIEngine {
+    component "向量化处理" as Vectorization
+    component "模型推理" as ModelInference
+    component "相似度计算" as SimilarityCalc
+  }
+}
+
+' 数据存储层
+package "数据存储层" {
+  database "用户行为数据存储" as BehaviorStorage {
+    note right
+      存储用户交互行为
+      点击、浏览、偏好等
+    end note
+  }
+  
+  database "文档数据存储" as DocumentStorage {
+    note right
+      存储原始文档
+      文档元数据
+    end note
+  }
+  
+  database "向量嵌入存储" as VectorStorage {
+    note right
+      存储文档向量嵌入
+      支持相似度检索
+    end note
+  }
+  
+  database "模型数据存储" as ModelStorage {
+    note right
+      TensorFlow.js模型
+      模型缓存和版本管理
+    end note
+  }
+  
+  database "会话记忆存储" as MemoryStorage {
+    note right
+      存储对话历史
+      上下文信息
+    end note
+  }
+  
+  database "配置数据存储" as ConfigStorage {
+    note right
+      LLM配置
+      系统配置参数
+    end note
+  }
+}
+
+' 数据服务层
+package "数据服务层" {
+  component "行为追踪服务\n(BehaviorTracker)" as BehaviorService {
+    note right
+      收集和存储
+      用户行为数据
+    end note
+  }
+  
+  component "文档管理服务\n(DocumentLoader)" as DocumentService {
+    note right
+      文档加载和
+      元数据管理
+    end note
+  }
+  
+  component "向量存储服务\n(VectorStore)" as VectorService {
+    note right
+      向量嵌入存储
+      相似度检索
+    end note
+  }
+  
+  component "模型管理服务\n(ModelManager)" as ModelService {
+    note right
+      模型加载、缓存
+      版本管理
+    end note
+  }
+  
+  component "记忆管理服务\n(MemoryService)" as MemoryService {
+    note right
+      会话记忆管理
+      上下文维护
+    end note
+  }
+}
+
+' 数据流定义
+UserInput --> DataPreprocess : 输入
+ExternalData --> DataPreprocess : 输入
+
+TextInput --> TextPreprocess : 处理
+ImageInput --> ImagePreprocess : 处理
+BehaviorInput --> BehaviorCollect : 收集
+
+TextPreprocess --> Vectorization : 向量化
+ImagePreprocess --> ModelInference : 推理
+BehaviorCollect --> BehaviorStorage : 存储
+
+Vectorization --> VectorStorage : 存储
+ModelInference --> ModelStorage : 缓存模型
+SimilarityCalc --> VectorStorage : 查询
+
+BehaviorService --> BehaviorStorage : 读写
+DocumentService --> DocumentStorage : 读写
+VectorService --> VectorStorage : 读写
+ModelService --> ModelStorage : 读写
+MemoryService --> MemoryStorage : 读写
+
+DocumentService --> DocFiles : 读取
+ModelService --> ModelFiles : 加载
+
+AIEngine --> VectorService : 使用
+AIEngine --> ModelService : 使用
+AIEngine --> MemoryService : 使用
+
+note right of VectorStorage
+  当前实现为内存存储
+  可扩展为持久化存储
+  (如Pinecone、Weaviate)
+end note
+
+note right of ModelStorage
+  TensorFlow.js模型
+  支持浏览器端和Node.js端
+  模型按需加载和缓存
+end note
+
+note right of MemoryStorage
+  当前实现为内存存储
+  可扩展为Redis等
+  持久化存储
+end note
+
+@enduml
+
